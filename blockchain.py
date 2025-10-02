@@ -98,6 +98,21 @@ def get_chain():
                 'length': len(blockchain.chain)}
     return jsonify(response), 200
 
+@app.route('/get_block/<int:index>', methods=['GET'])
+def get_block(index):
+    if index <= 0 or index > len(blockchain.chain):
+        return jsonify({'error': 'Invalid block index'}), 404
+    
+    block = blockchain.chain[index - 1]
+    response = {
+        'index': block['index'],
+        'timestamp': block['timestamp'],
+        'proof': block['proof'],
+        'previous_hash': block['previous_hash'],
+        'data': block['data']
+    }
+    return jsonify(response), 200
+
 @app.route('/is_valid', methods = ['GET'])
 def is_valid():
     is_valid = blockchain.is_chain_valid(blockchain.chain)
