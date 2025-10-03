@@ -2,6 +2,9 @@ import datetime
 import hashlib
 import json
 from flask import Flask, jsonify, request
+import requests
+from uuid import uuid4
+from urllib.parse import urlparse
 
 #block er kaj kam ekhane shuru hoilo
 
@@ -9,7 +12,9 @@ class Blockchain:
 
     def __init__(self):
         self.chain = []
+        self.fake_news = []
         self.create_block(proof=1, previous_hash='0', data="1st Block")
+        self.nodes = set()
 
     def create_block(self, proof, previous_hash, data):
         block = {
@@ -17,8 +22,10 @@ class Blockchain:
             'timestamp': str(datetime.datetime.now()),
             'proof': proof,
             'previous_hash': previous_hash,
-            'data': data
+             #'fake_news': self.fake_news
+             'data': data
         }
+        self.fake_news
         self.chain.append(block)
         return block
 
@@ -55,6 +62,40 @@ class Blockchain:
             previous_block = block
             block_index += 1
         return True
+    
+    def add_news(self, news_id, news_type, src_url, publication_date, slm_analysis_result, credibility_score, metadata):
+        self.fake_news.append({
+            'news_id': news_id,
+            'news_type': news_type,
+            'src_url': src_url,
+            'publication_date': publication_date,
+            'slm_analysis_result': slm_analysis_result,
+            'credibility_score': credibility_score,
+            'metadata': metadata
+            })
+        previous_block = self.get_previous_block()
+        return previous_block['index'] + 1
+    
+    def add_node(self, address):
+       parsed_url = urlparse(address)
+       self.nodes.add(parsed_url.netloc)
+       
+    def replace_chain(self):
+        network = self.nodes
+        longest_chain = None
+        max_length = len(self.chain)
+        for node in network:
+            response = requests.get(f'http://{node}/get_chain')
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = response.json()['chain']
+                if length > max_length and self.is_chain_valid(chain):
+                    max_length = length
+                    longest_chain = chain
+        if longest_chain:
+            self.chain = longest_chain
+            return True
+        return False   
 
 #web er kaj kam ekhane shuru hoilo
 
