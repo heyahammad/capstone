@@ -21,3 +21,22 @@ class Block:
         }, sort_keys=True).encode()
         
         return hashlib.sha256(block_string).hexdigest()
+    
+    def to_dict(self):
+        return {
+            'index': self.index,
+            'timestamp': self.timestamp,
+            'proof': self.proof,
+            'previous_hash': self.previous_hash,
+            'data': self.data,
+            'hash': self.hash
+        }
+    
+    def is_valid(self, previous_block):
+        if self.previous_hash != previous_block.hash:
+            return False
+        
+        if self.hash != self.calculate_hash():
+            return False
+        
+        return True
