@@ -3,7 +3,7 @@ import hashlib
 import os
 import json
 from urllib.parse import urlparse
-from Block import Block
+from block import Block
 
 class Blockchain:
     CHAIN_FILE = 'blockchain.json'
