@@ -1,14 +1,75 @@
 import requests
 import hashlib
+import os
+import json
 from urllib.parse import urlparse
 from Block import Block
 
 class Blockchain:
+    CHAIN_FILE = 'blockchain.json'
+
     def __init__(self):
         self.chain = []
         self.fake_news = []
         self.nodes = set()
-        self.create_genesis_block()
+        self.load_chain_from_disk()
+
+        if not self.chain:
+            self.create_genesis_block()
+
+        self.save_chain_to_disk()
+
+    def load_chain_from_disk(self):
+        """
+        Load the blockchain from the local JSON file upon node restart.
+        """
+        if os.path.exists(self.CHAIN_FILE):
+            try:
+                with open(self.CHAIN_FILE, 'r') as f:
+                    chain_data = json.load(f)
+                
+                # Rebuild the chain from dictionary data into Block objects
+                for block_data in chain_data:
+                    # We must use the saved timestamp and hash to maintain integrity
+                    block = Block(
+                        index=block_data['index'],
+                        proof=block_data['proof'],
+                        previous_hash=block_data['previous_hash'],
+                        data=block_data['data'],
+                        timestamp=block_data['timestamp']
+                    )
+                    
+                    # IMPORTANT: Verify the hash of the loaded block immediately
+                    if block.hash == block.calculate_hash():
+                        self.chain.append(block)
+                    else:
+                        print(f"CRITICAL ERROR: Hash mismatch for block {block.index}. Data corrupted.")
+                        self.chain = [] # Clear corrupted chain
+                        break
+                
+                if self.chain and self.is_chain_valid():
+                    print(f"Successfully loaded blockchain with {len(self.chain)} blocks from disk.")
+                else:
+                    self.chain = [] # Clear if chain integrity check fails after loading
+
+            except (IOError, json.JSONDecodeError) as e:
+                print(f"Error loading blockchain from disk: {e}")
+                self.chain = []
+        
+        
+    def save_chain_to_disk(self):
+        """
+        Save the current blockchain to the local JSON file.
+        This should be called every time a new block is successfully added.
+        """
+        try:
+            # Use get_chain_dict() to convert Block objects to serializable dictionaries
+            chain_data = self.get_chain_dict()
+            with open(self.CHAIN_FILE, 'w') as f:
+                json.dump(chain_data, f, indent=4)
+            # print(f"Blockchain saved to {self.CHAIN_FILE}.")
+        except IOError as e:
+            print(f"Error saving blockchain to disk: {e}")
     
     def create_genesis_block(self):
         """
@@ -35,7 +96,32 @@ class Blockchain:
             data=data
         )
         self.chain.append(block)
+        self.save_chain_to_disk()
+
         return block
+    
+    def get_block_by_source_url(self, src_url):
+        """
+        Searches the chain for any block containing the provided source URL.
+        
+        FIX: Updated logic to assume block.data is a single dictionary (transaction)
+        as per the current /mine_block implementation.
+        """
+        for block in reversed(self.chain):
+            # Check if the block's data is a dictionary (the single transaction payload)
+            # and if its 'src_url' key matches the input URL.
+            if isinstance(block.data, dict) and block.data.get('src_url') == src_url:
+                return block
+            
+            # --- Optional: If previous blocks might contain lists of news items ---
+            # This handles a mixed history where some blocks might have lists
+            if isinstance(block.data, list):
+                 for news_item in block.data:
+                    if isinstance(news_item, dict) and news_item.get('src_url') == src_url:
+                        return block
+            # --- End Optional ---
+
+        return None
     
     def get_previous_block(self):
         """
@@ -173,6 +259,7 @@ class Blockchain:
         # Replace our chain if we found a longer valid chain
         if longest_chain:
             self.chain = longest_chain
+            self.save_chain_to_disk()
             return True
         
         return False
@@ -196,3 +283,24 @@ class Blockchain:
         Get all fake news items that haven't been added to a block yet
         """
         return self.fake_news.copy()
+    
+    def broadcast_new_block(self, block):
+        """
+        Broadcasts a newly mined block to all connected nodes.
+        """
+        success_count = 0
+        block_data = block.to_dict()
+        
+        for node in self.nodes:
+            try:
+                # Assuming other nodes have an endpoint to receive a new block
+                requests.post(
+                    f'http://{node}/blocks/receive', 
+                    json={'block': block_data}
+                )
+                success_count += 1
+            except requests.exceptions.RequestException:
+                # Handle nodes that are down
+                print(f"Node {node} is unreachable.")
+                continue
+        return success_count
