@@ -1,0 +1,40 @@
+[
+    {
+        "index": 1,
+        "timestamp": "2025-10-20 14:37:52.948777",
+        "proof": 1,
+        "previous_hash": "0",
+        "data": "Genesis Block",
+        "hash": "935ccdddc57cff2f795c2c18dbacd9afb0f1f75ef2b27612c28175b6248e59b6"
+    },
+    {
+        "index": 2,
+        "timestamp": "2025-10-20 14:40:40.171840",
+        "proof": 533,
+        "previous_hash": "935ccdddc57cff2f795c2c18dbacd9afb0f1f75ef2b27612c28175b6248e59b6",
+        "data": {
+            "news_id": "N20251018001",
+            "news_type": "Politics",
+            "src_url": "https://www.bbc.com/news/world-67091012",
+            "publication_date": "2025-10-18",
+            "slm_analysis_result": {
+                "verdict": "Likely True",
+                "confidence": 0.87,
+                "keywords": [
+                    "election",
+                    "policy",
+                    "minister",
+                    "reform"
+                ]
+            },
+            "credibility_score": 8.5,
+            "metadata": {
+                "image_url": "https://cdn.bbc.com/article-image-67091012.jpg",
+                "image_hash": "af34c1b7d82ef43c9a1d89f0c6e19baf",
+                "description": "Minister announces new policy reform in national assembly.",
+                "language": "en"
+            }
+        },
+        "hash": "fc2df4aa6f70c4ff6f29c34166e9c06abfa69233ca5000c72832d592c9f96511"
+    }
+]

@@ -101,12 +101,7 @@ class Blockchain:
         return block
     
     def get_block_by_source_url(self, src_url):
-        """
-        Searches the chain for any block containing the provided source URL.
-        
-        FIX: Updated logic to assume block.data is a single dictionary (transaction)
-        as per the current /mine_block implementation.
-        """
+
         for block in reversed(self.chain):
             # Check if the block's data is a dictionary (the single transaction payload)
             # and if its 'src_url' key matches the input URL.
