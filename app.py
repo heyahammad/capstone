@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
-from Block import Block
-from Blockchain import Blockchain
+from block import Block
+from blockchain import Blockchain
 
 app = Flask(__name__)
 blockchain = Blockchain()
